@@ -6,15 +6,6 @@ import os
 from flask import Flask, flash, render_template, request, url_for, redirect
 from werkzeug.utils import secure_filename
 
-# deep learning/image modules
-from PIL import Image
-import torch
-from torchvision import models, transforms
-
-# For simplicity, we'll just store the model as a global
-mobilenet = models.mobilenet_v2(pretrained=True)
-mobilenet.eval()
-
 # Flask constants, do not change!
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 app = Flask(__name__)
