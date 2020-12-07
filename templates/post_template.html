@@ -1,0 +1,22 @@
+<!doctype html>
+<title>Tweeter</title>
+<h1>Post a Tweet</h1>
+<br>
+<form action="" method="post" class="form-example">
+  <div class="form-example">
+    <label for="tweet">Tweet: </label>
+    <input type=text name=tweet id="tweet" required>
+  </div>
+  <div class="form-example">
+    <label for="sender">Sender: </label>
+    <input type=text name=sender id="sender" required>
+  </div>
+  <div class="form-example">
+    <input type="submit" value="Tweet!">
+  </div>
+</form>
+<br>
+
+{% for message in get_flashed_messages() %}
+  <div class="flash">{{ message }}</div>
+{% endfor %}
