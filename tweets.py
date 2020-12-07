@@ -20,6 +20,9 @@ class Tweets:
         tw = Tweet(tweet, sender, len(self.tweets))
         self.tweets[str(len(self.tweets))] = tw.to_dict()
 
+    def get_tweets(self):
+        return self.tweets
+
 
     def __str__(self):
         """

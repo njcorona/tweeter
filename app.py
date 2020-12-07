@@ -6,6 +6,9 @@ import os
 from flask import Flask, flash, render_template, request, url_for, redirect
 from werkzeug.utils import secure_filename
 
+from tweet import *
+from tweets import *
+
 # Flask constants, do not change!
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 app = Flask(__name__)
@@ -29,16 +32,23 @@ def post_tweet():
     sender = request.form["sender"]
     tweet = request.form["tweet"]
 
-    print(tweet)
-    print(sender)
-
     if not tweet:
         flash("Please provide a non-empty tweet.")
+        return redirect("/tweet")
+
+    if not sender:
+        flash("Please provide a non-empty sender.")
         return redirect("/tweet")
 
     if len(tweet) > 280:
         flash("Tweets must be 280 characters or less.")
         return redirect("/tweet")
+
+    tweets = Tweets(json.load(open("tweets.json")))
+    tweets.create_tweet(tweet, sender)
+
+    with open("tweets.json", "w") as outfile:  
+      json.dump(tweets.get_tweets(), outfile) 
 
     return redirect("/render_feed")
 
@@ -82,7 +92,10 @@ def render_feed():
     Returns:
         True if successful, False otherwise
     """
-    raise NotImplementedError
+    tweets = Tweets(json.load(open("tweets.json")))
+
+    return render_template("feed_template.html",
+                           tweets=tweets)
 
 @app.route("/retweet", methods=['POST'])
 def retweet():

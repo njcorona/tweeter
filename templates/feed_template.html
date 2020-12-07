@@ -1,0 +1,5 @@
+<!doctype html>
+<title>Tweeter</title>
+{% for value in tweets.get_tweets().values() %}
+  <li>{{ value }}</li>
+{% endfor %}
