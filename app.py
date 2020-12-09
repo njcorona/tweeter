@@ -145,7 +145,7 @@ def home():
         The required return by Flask so the user is redirected to the /upload
         URL
     """
-    return redirect("/tweet")
+    return redirect("/render_feed")
 
 
 if __name__ == "__main__":
