@@ -1,5 +1,34 @@
 <!doctype html>
-<title>Tweeter</title>
-{% for value in tweets.get_tweets().values() %}
-  <li>{{ value }}</li>
-{% endfor %}
+<article class="twitter-feed">
+    <h1>Global Tweeter Feed</h1>
+    <hr>
+    <form action="/tweet">
+      <input type="submit" value="Post a Tweet!">
+    </form>
+    <hr>
+    {% for value in tweets.get_tweets().values() %}
+      <article class="individual-tweet">
+        <h4>{{ "@" + value["sender"] }}, {{ value["timestamp"] }}</h4>
+        <h3>{{ value["tweet"] }}</h3>
+        <form action={{ "/retweet?tweet=" + "{}".format(value["id"]) }} method="post">
+          <div class="form-example">
+            <label for="sender">Sender: </label>
+            <input type=text name=sender id="sender" required>
+          </div>
+          <div class="form-example">
+            <input type="submit" value="Retweet!">
+          </div>
+        </form>
+        <form action={{ "/delete?tweet=" + "{}".format(value["id"]) + "&sender=" + value["sender"] }} method="post">
+          <div class="form-example">
+            <input type="submit" value="Delete.">
+          </div>
+        </form>
+        <hr>
+      </article>
+    {% endfor %}
+</article>
+<hr>
+<form action="/tweet">
+  <input type="submit" value="Post a Tweet!">
+</form>

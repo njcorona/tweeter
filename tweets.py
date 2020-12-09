@@ -17,12 +17,19 @@ class Tweets:
 
 
     def create_tweet(self, tweet, sender):
-        tw = Tweet(tweet, sender, len(self.tweets))
-        self.tweets[str(len(self.tweets))] = tw.to_dict()
+        print(int(max(self.tweets.keys())))
+        tw = Tweet(tweet, sender, int(max(self.tweets.keys())) + 1)
+        self.tweets[str(int(max(self.tweets.keys())) + 1)] = tw.to_dict()
 
     def get_tweets(self):
         return self.tweets
 
+    def delete_tweet(self, tweet, sender):
+        print(tweet)
+        print(sender)
+        print(self)
+        if self.tweets[tweet]["sender"] == sender:
+            del self.tweets[tweet]
 
     def __str__(self):
         """

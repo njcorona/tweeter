@@ -1,3 +1,7 @@
+# user authentication
+# nice html / css
+# Do I need one instance of Tweets that exists across the program?  OR do I just create one each time I need it fromthe json?
+
 # built-in modules
 import json
 import os
@@ -40,6 +44,10 @@ def post_tweet():
         flash("Please provide a non-empty sender.")
         return redirect("/tweet")
 
+    if any(c.isspace() for c in sender):
+        flash("Please provide a sender without whitespace.")
+        return redirect("/tweet")
+
     if len(tweet) > 280:
         flash("Tweets must be 280 characters or less.")
         return redirect("/tweet")
@@ -48,7 +56,7 @@ def post_tweet():
     tweets.create_tweet(tweet, sender)
 
     with open("tweets.json", "w") as outfile:  
-      json.dump(tweets.get_tweets(), outfile) 
+        json.dump(tweets.get_tweets(), outfile) 
 
     return redirect("/render_feed")
 
@@ -80,7 +88,17 @@ def delete_tweet():
     Returns:
         True if successful, False otherwise
     """
-    raise NotImplementedError
+    tweet = request.args.get("tweet")
+    sender = request.args.get("sender")
+
+    tweets = Tweets(json.load(open("tweets.json")))
+    tweets.delete_tweet(tweet, sender)
+
+    with open("tweets.json", "w") as outfile:  
+        json.dump(tweets.get_tweets(), outfile)
+
+    return redirect("/render_feed")
+
 
 @app.route("/render_feed", methods=['GET'])
 def render_feed():
@@ -108,7 +126,12 @@ def retweet():
     Returns:
         True if successful, False otherwise
     """
-    raise NotImplementedError
+    sender = request.form["sender"]
+    tweet = request.args.get("tweet")
+
+    return redirect(url_for("post_tweet"))
+
+
 
 @app.route("/", methods=['GET'])
 def home():
