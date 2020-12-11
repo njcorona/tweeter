@@ -12,10 +12,6 @@
         <h3>{{ value["tweet"] }}</h3>
         <form action={{ "/retweet?tweet=" + "{}".format(value["id"]) }} method="post">
           <div class="form-example">
-            <label for="sender">Sender: </label>
-            <input type=text name=sender id="sender" required>
-          </div>
-          <div class="form-example">
             <input type="submit" value="Retweet!">
           </div>
         </form>

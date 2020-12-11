@@ -1,16 +1,15 @@
 <!doctype html>
 <title>Tweeter</title>
 <h1>Post a Tweet</h1>
-<br>
+<p> {{ message }} 
+   
+</p>
 <form action="" method="post" class="form-example">
   <div class="form-example">
     <label for="tweet">Tweet: </label>
     <input type=text name=tweet id="tweet" required>
   </div>
-  <div class="form-example">
-    <label for="sender">Sender: </label>
-    <input type=text name=sender id="sender" required>
-  </div>
+  <p>   </p>
   <div class="form-example">
     <input type="submit" value="Tweet!">
   </div>
@@ -21,6 +20,28 @@
   <div class="flash">{{ message }}</div>
 {% endfor %}
 
-<form action="/render_feed">
-  <input type="submit" value="Go to Tweeter feed!">
+<hr>
+
+{% if loggedin %}
+<form action="/logout">
+  <input type="submit" value="Log out.">
+</form>
+{% else %}
+<form action="/login">
+  <input type="submit" value="Log in.">
+</form>
+{% endif %}
+
+<form action="/register">
+  <input type="submit" value="Register a new user.">
+</form>
+
+{% if loggedin %}
+<form action="/personal_feed">
+  <input type="submit" value="Go to personal Tweeter feed.">
+</form>
+{% endif %}
+
+<form action="/global_feed">
+  <input type="submit" value="Go to global Tweeter feed.">
 </form>

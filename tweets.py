@@ -33,12 +33,12 @@ class Tweets:
 
     def __str__(self):
         """
-        Produces a string representation of the Tweet.
+        Produces a string representation of a collection of Tweets.
 
         Args:
             None
         Returns:
-            A string representation of the Tweet.
+            A string representation of a collection of Tweets.
         """
         return str(self.tweets)
 

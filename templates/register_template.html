@@ -1,0 +1,26 @@
+<!doctype html>
+<title>Tweeter</title>
+<h1>Register for an account on Tweeter</h1>
+<br>
+<form action="" method="post" class="form-example">
+  <div class="form-example">
+    <label for="username">Username: </label>
+    <input type=text name=username id="username" required>
+  </div>
+  <div class="form-example">
+    <label for="password">Password: </label>
+    <input type=text name=password id="password" required>
+  </div>
+  <div class="form-example">
+    <input type="submit" value="Register!">
+  </div>
+</form>
+<br>
+
+{% for message in get_flashed_messages() %}
+  <div class="flash">{{ message }}</div>
+{% endfor %}
+
+<form action="/login">
+  <input type="submit" value="Already registered?  Log in here.">
+</form>

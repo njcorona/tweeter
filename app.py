@@ -1,13 +1,15 @@
-# user authentication
-# nice html / css
+# nice html / css - no
 # Do I need one instance of Tweets that exists across the program?  OR do I just create one each time I need it fromthe json?
+# Is my use of a class definition interesting enough
+# Are my dunder methods interesting at all
+# how to specify whether redirect is get or post
 
 # built-in modules
 import json
 import os
 
 # web dev modules
-from flask import Flask, flash, render_template, request, url_for, redirect
+from flask import Flask, flash, render_template, request, url_for, redirect, session
 from werkzeug.utils import secure_filename
 
 from tweet import *
@@ -17,6 +19,12 @@ from tweets import *
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 app = Flask(__name__)
 app.secret_key = 'ax9o4klasi-0oakdn'  # random secret key (needed for flashing)
+
+
+def save_tweets():
+    with open("tweets.json", "w") as outfile:
+        json.dump(session["tweets"], outfile)
+
 
 @app.route("/tweet", methods=['GET', 'POST'])
 def post_tweet():
@@ -31,37 +39,38 @@ def post_tweet():
         True if successful, False otherwise
     """
     if request.method == 'GET':
-        return render_template("post_template.html")
+        if "user" in session:
+            return render_template("post_template.html",
+            	   message="You are currently logged in as " + session["user"] + ".",
+            	   loggedin=True)
+        else:
+            return render_template("post_template.html",
+            	   message="You are not logged in.  Please log in to post a tweet.",
+            	   loggedin=False)
 
-    sender = request.form["sender"]
+    if not session["user"]:
+        flash("You must be logged in to post a tweet!")
+        return render_template("post_template.html",
+        	                   message="You are not logged in.  Please log in to post a tweet.",
+            	               loggedin=False)
+
     tweet = request.form["tweet"]
 
     if not tweet:
         flash("Please provide a non-empty tweet.")
         return redirect("/tweet")
 
-    if not sender:
-        flash("Please provide a non-empty sender.")
-        return redirect("/tweet")
-
-    if any(c.isspace() for c in sender):
-        flash("Please provide a sender without whitespace.")
-        return redirect("/tweet")
-
     if len(tweet) > 280:
         flash("Tweets must be 280 characters or less.")
         return redirect("/tweet")
 
-    tweets = Tweets(json.load(open("tweets.json")))
-    tweets.create_tweet(tweet, sender)
+    tw = Tweet(tweet, session["user"], int(max(session["tweets"].keys())) + 1)
+    tws = session["tweets"]
+    tws[str(int(max(session["tweets"].keys())) + 1)] = tw.to_dict()
+    session["tweets"] = tws
+    save_tweets()
 
-    with open("tweets.json", "w") as outfile:  
-        json.dump(tweets.get_tweets(), outfile) 
-
-    return redirect("/render_feed")
-
-    # TODO: update this to make the identifier the number of current tweets + 1.
-    # TODO: save tweet to json, once I learn how to do that.
+    return redirect("/personal_feed")
 
 
 @app.route("/reply", methods=['POST'])
@@ -91,17 +100,15 @@ def delete_tweet():
     tweet = request.args.get("tweet")
     sender = request.args.get("sender")
 
-    tweets = Tweets(json.load(open("tweets.json")))
-    tweets.delete_tweet(tweet, sender)
+    session["tweets"].delete_tweet(tweet, sender)
 
-    with open("tweets.json", "w") as outfile:  
-        json.dump(tweets.get_tweets(), outfile)
+    save_tweets()
 
-    return redirect("/render_feed")
+    return redirect("/personal_feed")
 
 
-@app.route("/render_feed", methods=['GET'])
-def render_feed():
+@app.route("/personal_feed", methods=['GET'])
+def personal_feed():
     """
     Renders the user's feed, in chronological order.
 
@@ -110,10 +117,24 @@ def render_feed():
     Returns:
         True if successful, False otherwise
     """
-    tweets = Tweets(json.load(open("tweets.json")))
+    if "user" in session:
+        return render_template("personal_feed_template.html",
+            	               tweets=Tweets(session["tweets"]))
+    else:
+        return redirect("/global_feed")
 
-    return render_template("feed_template.html",
-                           tweets=tweets)
+@app.route("/global_feed", methods=['GET'])
+def global_feed():
+    """
+    Renders the user's feed, in chronological order.
+
+    Args:
+        None
+    Returns:
+        True if successful, False otherwise
+    """
+    return render_template("global_feed_template.html",
+                           tweets=Tweets(session["tweets"]))
 
 @app.route("/retweet", methods=['POST'])
 def retweet():
@@ -131,6 +152,85 @@ def retweet():
 
     return redirect(url_for("post_tweet"))
 
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    """
+    """
+    if request.method == 'GET':
+        if "user" in session:
+            return render_template("login_template.html",
+        	                   message="You are currently logged in as " + session["user"] + ".  This will log you out.")
+        else:
+            return render_template("login_template.html",
+        	                   message="You are not currently logged in.")
+
+    un = request.form["username"]
+    pw = request.form["password"]
+
+    users = json.load(open("users.json"))
+
+    if un not in users:
+    	flash("Username does not exist.")
+    	return redirect("/login")
+
+    if pw != users[un]["pw"]:
+        flash("Incorrect password.")
+        return redirect("/login")
+
+    session["user"] = un
+
+    return redirect("/personal_feed")
+
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+    """
+    """
+    if request.method == 'GET':
+        return render_template("register_template.html")
+
+    un = request.form["username"]
+    pw = request.form["password"]
+
+    users = json.load(open("users.json"))
+
+    if not un:
+        flash("Please provide a non-empty username.")
+        return redirect("/register")
+
+    if not pw:
+        flash("Please provide a non-empty password.")
+        return redirect("/register")
+
+    if any(c.isspace() for c in un):
+        flash("Please provide a username without whitespace.")
+        return redirect("/register")
+
+    if any(c.isspace() for c in pw):
+        flash("Please provide a password without whitespace.")
+        return redirect("/register")
+
+    if un in users:
+        flash("User already registered.")
+        return redirect("/register")
+
+    users[un] = { "pw" : pw,
+                  "following": [],
+                  "followers": []
+    }
+
+    with open("users.json", "w") as outfile:  
+        json.dump(users, outfile)
+
+    return redirect(url_for("login"))
+
+
+@app.route("/logout", methods=['GET', 'POST'])
+def logout():
+    """
+    """
+    session.pop("user")
+
+    return redirect("/login")
 
 
 @app.route("/", methods=['GET'])
@@ -145,7 +245,8 @@ def home():
         The required return by Flask so the user is redirected to the /upload
         URL
     """
-    return redirect("/render_feed")
+    session["tweets"] = json.load(open("tweets.json"))
+    return redirect("/global_feed")
 
 
 if __name__ == "__main__":
