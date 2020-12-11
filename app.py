@@ -63,11 +63,17 @@ def post_tweet():
     if len(tweet) > 280:
         flash("Tweets must be 280 characters or less.")
         return redirect("/tweet")
-
-    tw = Tweet(tweet, session["user"], int(max(session["tweets"].keys())) + 1)
-    tws = session["tweets"]
-    tws[str(int(max(session["tweets"].keys())) + 1)] = tw.to_dict()
-    session["tweets"] = tws
+    
+    if len(session["tweets"].keys()) == 0:
+        tw = Tweet(tweet, session["user"], 0)
+        tws = session["tweets"]
+        tws["0"] = tw.to_dict()
+        session["tweets"] = tws
+    else:
+        tw = Tweet(tweet, session["user"], int(max(session["tweets"].keys())) + 1)
+        tws = session["tweets"]
+        tws[str(int(max(session["tweets"].keys())) + 1)] = tw.to_dict()
+        session["tweets"] = tws
     save_tweets()
 
     return redirect("/personal_feed")
@@ -97,14 +103,18 @@ def delete_tweet():
     Returns:
         True if successful, False otherwise
     """
-    tweet = request.args.get("tweet")
-    sender = request.args.get("sender")
+    tw_id = request.args.get("tweet")
+    global_feed = request.args.get("global")
 
-    session["tweets"].delete_tweet(tweet, sender)
-
+    tws = session["tweets"]
+    tws.pop(tw_id)
+    session["tweets"] = tws
     save_tweets()
 
-    return redirect("/personal_feed")
+    if global_feed == "True":
+        return redirect("/global_feed")
+    else:
+        return redirect("/personal_feed")
 
 
 @app.route("/personal_feed", methods=['GET'])
@@ -119,7 +129,9 @@ def personal_feed():
     """
     if "user" in session:
         return render_template("personal_feed_template.html",
-            	               tweets=Tweets(session["tweets"]))
+            	               tweets=Tweets(session["tweets"]),
+            	               user=session["user"],
+            	               users=json.load(open("users.json")))
     else:
         return redirect("/global_feed")
 
@@ -133,8 +145,16 @@ def global_feed():
     Returns:
         True if successful, False otherwise
     """
-    return render_template("global_feed_template.html",
-                           tweets=Tweets(session["tweets"]))
+    if "user" in session:
+    	return render_template("global_feed_template.html",
+                               tweets=Tweets(session["tweets"]),
+                               user=session["user"],
+                               users=json.load(open("users.json")))
+    else:
+    	return render_template("global_feed_template.html",
+                               tweets=Tweets(session["tweets"]),
+                               user="")
+
 
 @app.route("/retweet", methods=['POST'])
 def retweet():
@@ -151,6 +171,7 @@ def retweet():
     tweet = request.args.get("tweet")
 
     return redirect(url_for("post_tweet"))
+
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -180,6 +201,7 @@ def login():
     session["user"] = un
 
     return redirect("/personal_feed")
+
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
@@ -224,13 +246,46 @@ def register():
     return redirect(url_for("login"))
 
 
-@app.route("/logout", methods=['GET', 'POST'])
+@app.route("/logout", methods=['GET'])
 def logout():
     """
     """
     session.pop("user")
 
     return redirect("/login")
+
+
+@app.route("/follow", methods=['POST'])
+def follow():
+    """
+    """
+    if "user" in session:
+        followee = request.args.get("followee")
+        users = json.load(open("users.json"))
+        users[session["user"]]["following"].append(followee)
+        users[followee]["followers"].append(session["user"])
+        with open("users.json", "w") as outfile:  
+            json.dump(users, outfile)
+        return redirect("/personal_feed")
+    else:
+    	flash("You must be logged in to follow someone.")
+    	return redirect("/global_feed")
+
+@app.route("/unfollow", methods=['POST'])
+def unfollow():
+    """
+    """
+    if "user" in session:
+        unfollowee = request.args.get("unfollowee")
+        users = json.load(open("users.json"))
+        users[session["user"]]["following"].remove(unfollowee)
+        users[unfollowee]["followers"].remove(session["user"])
+        with open("users.json", "w") as outfile:  
+            json.dump(users, outfile)
+        return redirect("/personal_feed")
+    else:
+    	flash("You must be logged in to unfollow someone.")
+    	return redirect("/global_feed")
 
 
 @app.route("/", methods=['GET'])

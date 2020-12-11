@@ -12,19 +12,58 @@
         <h3>{{ value["tweet"] }}</h3>
         <form action={{ "/retweet?tweet=" + "{}".format(value["id"]) }} method="post">
           <div class="form-example">
-            <input type="submit" value="Retweet!">
+            <input type="submit" value="Retweet">
           </div>
         </form>
-        <form action={{ "/delete?tweet=" + "{}".format(value["id"]) + "&sender=" + value["sender"] }} method="post">
-          <div class="form-example">
-            <input type="submit" value="Delete.">
-          </div>
-        </form>
+        {% if user and user != value["sender"] %}
+          {% if value["sender"] not in users[user]["following"] %}
+            <form action={{ "/follow?followee=" + value["sender"] }} method="post">
+              <div class="form-example">
+                <input type="submit" value="Follow">
+              </div>
+            </form>
+          {% else %}
+            <form action={{ "/unfollow?unfollowee=" + value["sender"] }} method="post">
+              <div class="form-example">
+                <input type="submit" value="Unfollow">
+              </div>
+            </form>
+          {% endif %}
+        {% endif %}
+        {% if value["sender"] == user %}
+          <form action={{ "/delete?tweet=" + "{}".format(value["id"]) + "&global=True" }} method="post">
+            <div class="form-example">
+              <input type="submit" value="Delete">
+            </div>
+          </form>
+        {% endif %}
         <hr>
       </article>
     {% endfor %}
 </article>
 <hr>
-<form action="/tweet">
-  <input type="submit" value="Post a Tweet!">
+
+{% if user %}
+  <form action="/personal_feed">
+    <input type="submit" value="Go to personal Tweeter feed">
+  </form>
+
+  <form action="/tweet">
+    <input type="submit" value="Post a tweet">
+  </form>
+
+  <form action="/logout">
+    <input type="submit" value="Log out.">
+  </form>
+
+{% else %}
+
+  <form action="/login">
+    <input type="submit" value="Log in.">
+  </form>
+
+{% endif %}
+
+<form action="/register">
+  <input type="submit" value="Register a new user.">
 </form>
