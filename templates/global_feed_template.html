@@ -6,15 +6,20 @@
       <input type="submit" value="Post a Tweet!">
     </form>
     <hr>
-    {% for value in tweets.get_tweets().values() %}
+    {% for value in tweets.get_sorted_tweets(users, "") %}
       <article class="individual-tweet">
+        {% if value["retweeter"] %}
+          <h5>{{ "[Retweeted by @" + value["retweeter"] }}, {{ value["retweet_time"] }}]</h5>
+        {% endif %}
         <h4>{{ "@" + value["sender"] }}, {{ value["timestamp"] }}</h4>
         <h3>{{ value["tweet"] }}</h3>
-        <form action={{ "/retweet?tweet=" + "{}".format(value["id"]) }} method="post">
-          <div class="form-example">
-            <input type="submit" value="Retweet">
-          </div>
-        </form>
+        {% if user %}
+            <form action={{ "/retweet?tweet=" + "{}".format(value["id"]) }} method="post">
+              <div class="form-example">
+                <input type="submit" value="Retweet!">
+              </div>
+            </form>
+          {% endif %}
         {% if user and user != value["sender"] %}
           {% if value["sender"] not in users[user]["following"] %}
             <form action={{ "/follow?followee=" + value["sender"] }} method="post">

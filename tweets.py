@@ -1,4 +1,5 @@
 from tweet import *
+import json
 from datetime import datetime
 
 class Tweets:
@@ -17,20 +18,6 @@ class Tweets:
         self.tweets = tweets
 
 
-    def global_sorter(item):
-        # We have id, sender, most recent timestamp, and contents.
-        date_time_obj = datetime.strptime(item["recent_timestamp"], '%m-%d-%Y %H:%M:%S')
-        return (date_time_obj, item["sender"])
-
-
-    def personal_sorter(item):
-        # We have id, sender, most recent timestamp, and ,
-        date_time_obj = datetime.strptime(item["recent_timestamp"], '%m-%d-%Y %H:%M:%S')
-
-        # Python sorts False to be before True, and we want priority tweets to go first, so we use the not operator
-        return (not item["priority"], date_time_obj)
-
-
     def get_sorted_tweets(self, users, user):
         # Tweets have timestamps and users.  Retweets would essentially update the timestamp.
         # So let's add a timestamp and a boolean - the boolean won't be used here, but it'll add a "retweeted" tag on the html.
@@ -38,15 +25,20 @@ class Tweets:
         # or the time of creation, whatever came most recently.
         # So for the personal feed, we want to sort by: time
         # For the general feed, we want to sort by: most retweets,
-        if not user:
-            return sorted(self.tweets, key=global_sorter)
-        else:
-            enhanced_tweets = {}
-            for (key, value) in self.tweets:
-                if value["sender"] in users[user]["following"]:
-                    value["priority"] = True
-                enhanced_tweets[key] = value
-            return sorted(self.tweets, key=personal_sorter)
+        def sorter(item):
+            # We have id, sender, most recent timestamp, and ,
+            if item["retweet_time"]:
+                return (item["priority"], datetime.strptime(item["retweet_time"], '%m/%d/%Y %H:%M:%S'))
+            else:
+                return (item["priority"], datetime.strptime(item["timestamp"], '%m/%d/%Y %H:%M:%S'))          
+
+        enhanced_tweets = []
+        for key in self.tweets:
+            new_value = self.tweets[key]
+            new_value["priority"] = user and (new_value["sender"] in users[user]["following"] or new_value["retweeter"] in users[user]["following"])
+            enhanced_tweets.append(new_value)
+        return sorted(enhanced_tweets, key=sorter, reverse=True)
+    
 
     def __str__(self):
         """
@@ -57,6 +49,16 @@ class Tweets:
         Returns:
             A string representation of a collection of Tweets.
         """
-        return str(self.tweets)
-        # Construct tweets using tweet class.
-        # Print each one of them.
+        strt = ""
+        for key in self.tweets:
+            strt = strt + str(Tweet(self.tweets[key]["tweet"],
+                                    self.tweets[key]["sender"],
+                                    self.tweets[key]["id"],
+                                    self.tweets[key]["timestamp"]))
+
+        return "[\n" + strt + "\n]"
+
+
+if __name__ == "__main__":
+    tweets = Tweets(json.load(open("tweets.json")))
+    print(tweets)

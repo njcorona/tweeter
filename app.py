@@ -14,6 +14,7 @@ from werkzeug.utils import secure_filename
 
 from tweet import *
 from tweets import *
+from datetime import datetime
 
 # Flask constants, do not change!
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
@@ -65,12 +66,12 @@ def post_tweet():
         return redirect("/tweet")
     
     if len(session["tweets"].keys()) == 0:
-        tw = Tweet(tweet, session["user"], 0)
+        tw = Tweet(tweet, session["user"], 0, datetime.now().strftime("%m/%d/%Y %H:%M:%S"))
         tws = session["tweets"]
         tws["0"] = tw.to_dict()
         session["tweets"] = tws
     else:
-        tw = Tweet(tweet, session["user"], int(max(session["tweets"].keys())) + 1)
+        tw = Tweet(tweet, session["user"], int(max(session["tweets"].keys())) + 1, datetime.now().strftime("%m/%d/%Y %H:%M:%S"))
         tws = session["tweets"]
         tws[str(int(max(session["tweets"].keys())) + 1)] = tw.to_dict()
         session["tweets"] = tws
@@ -167,10 +168,16 @@ def retweet():
     Returns:
         True if successful, False otherwise
     """
-    sender = request.form["sender"]
-    tweet = request.args.get("tweet")
+    tw_id = request.args.get("tweet")
 
-    return redirect(url_for("post_tweet"))
+    tws = session["tweets"]
+    tws[tw_id]["retweet_time"] = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+    tws[tw_id]["retweeter"] = session["user"]
+
+    session["tweets"] = tws
+    save_tweets()
+
+    return redirect("/personal_feed")
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -236,8 +243,8 @@ def register():
         return redirect("/register")
 
     users[un] = { "pw" : pw,
-                  "following": [],
-                  "followers": []
+                  "following": [un],
+                  "followers": [un]
     }
 
     with open("users.json", "w") as outfile:  

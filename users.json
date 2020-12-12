@@ -1,1 +1,1 @@
-{"NickyC": {"pw": "penn", "following": ["Daksh"], "followers": []}, "Daksh": {"pw": "ta", "following": [], "followers": ["NickyC"]}, "TonyLiu": {"pw": "instructor", "following": [], "followers": []}}
+{"NickyC": {"pw": "penn", "following": ["NickyC"], "followers": ["NickyC", "Daksh"]}, "Daksh": {"pw": "ta", "following": ["Daksh", "NickyC"], "followers": ["Daksh"]}, "Tony": {"pw": "instructor", "following": ["Tony"], "followers": ["Tony"]}}
