@@ -1,15 +1,7 @@
-<!doctype html>
-<title>Tweeter</title>
-<h1>Log in to your account on Tweeter</h1>
+{% extends "base.html" %}
 
-{% for message in get_flashed_messages() %}
-  <div class="flash">{{ message }}</div>
-{% endfor %}
-
-<p>{{ message }}
-   
-</p>
-
+{% block body %}
+{{ super() }}
 <br>
 <form action="" method="post" class="form-example">
   <div class="form-example">
@@ -33,3 +25,4 @@
 <form action="/global_feed">
   <input type="submit" value="Go to global Tweeter feed">
 </form>
+{% endblock %}

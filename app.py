@@ -1,28 +1,31 @@
-# nice html / css - no
-# Do I need one instance of Tweets that exists across the program?  OR do I just create one each time I need it fromthe json?
-# Is my use of a class definition interesting enough
-# Are my dunder methods interesting at all
-# how to specify whether redirect is get or post
-
 # built-in modules
 import json
 import os
+import datetime
 
-# web dev modules
-from flask import Flask, flash, render_template, request, url_for, redirect, session
-from werkzeug.utils import secure_filename
+# non-trivial third-party modules
+from flask import Flask, flash, render_template, request, redirect, session
+from flask_bootstrap import Bootstrap
 
 from tweet import *
 from tweets import *
-from datetime import datetime
 
-# Flask constants, do not change!
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+# Flask constants
 app = Flask(__name__)
+Bootstrap(app)
 app.secret_key = 'ax9o4klasi-0oakdn'  # random secret key (needed for flashing)
 
 
 def save_tweets():
+    """
+    Saves the current session's tweets to tweets.json.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
     with open("tweets.json", "w") as outfile:
         json.dump(session["tweets"], outfile)
 
@@ -30,30 +33,34 @@ def save_tweets():
 @app.route("/tweet", methods=['GET', 'POST'])
 def post_tweet():
     """
-    Adds a tweet to the server.  Takes in tweet as
-    argument, but also notes identity of sender
-    and current system time.
+    Posts a tweet to the server.  Requires the current user
+    to be logged in, the tweet to be non-empty, and the tweet
+    to have fewer than 281 characters.
 
     Args:
-        tweet (str): the tweet to be added to the server
+        tweet (str): the tweet to be added to the server, provided via html form
+
     Returns:
-        True if successful, False otherwise
+        render_template of post_template if 'GET' or if post fails to be created,
+        otherwise render_template of personal_feed_template
     """
     if request.method == 'GET':
         if "user" in session:
+            flash("You are currently logged in as " + session["user"] + ".")
             return render_template("post_template.html",
-            	   message="You are currently logged in as " + session["user"] + ".",
-            	   loggedin=True)
+            	   loggedin=True,
+            	   title="Post a Tweet")
         else:
+            flash("You are not logged in.  Please log in to post a tweet.")
             return render_template("post_template.html",
-            	   message="You are not logged in.  Please log in to post a tweet.",
-            	   loggedin=False)
+            	   loggedin=False,
+            	   title="Post a Tweet")
 
     if not session["user"]:
         flash("You must be logged in to post a tweet!")
         return render_template("post_template.html",
-        	                   message="You are not logged in.  Please log in to post a tweet.",
-            	               loggedin=False)
+            	               loggedin=False,
+            	               title="Post a Tweet")
 
     tweet = request.form["tweet"]
 
@@ -80,29 +87,21 @@ def post_tweet():
     return redirect("/personal_feed")
 
 
-@app.route("/reply", methods=['POST'])
-def post_reply():
-    """
-    Adds a tweet in response to another tweet to the server.
-    (This creates a "thread" instead of a single tweet.)
-
-    Args:
-        tweet (str): the tweet to be added to the server
-        prev (str): identifier for the replied-to tweet
-    Returns:
-        True if successful, False otherwise
-    """
-    raise NotImplementedError
-
 @app.route("/delete", methods=['POST'])
 def delete_tweet():
     """
-    Deletes a tweet from the server.
+    Deletes a tweet from the server.  Requires the current user
+    to be logged in and deleting a tweet they posted.
 
     Args:
-        tweet (str): identifier for the tweet to be deleted
+        tweet (str): id for the tweet to be deleted, provided via http request
+        global (str): "True" if redirect to /global_feed,
+                      otherwise redirect to /personal_feed,
+                      provided via http request
+
     Returns:
-        True if successful, False otherwise
+        redirect to global_feed or personal_feed,
+        as determined by args described above
     """
     tw_id = request.args.get("tweet")
     global_feed = request.args.get("global")
@@ -121,52 +120,68 @@ def delete_tweet():
 @app.route("/personal_feed", methods=['GET'])
 def personal_feed():
     """
-    Renders the user's feed, in chronological order.
+    Renders the current user's feed.  Feed is composed of
+    tweets sorted first by whether they were posted by
+    someone the current user is following and second by
+    chronological order of most recent retweet or time of
+    posting.
 
     Args:
         None
     Returns:
-        True if successful, False otherwise
+        render_template of personal_feed_template if there is
+        a current user logged in, otherwise redirects to the
+        global_feed.
     """
     if "user" in session:
         return render_template("personal_feed_template.html",
             	               tweets=Tweets(session["tweets"]),
             	               user=session["user"],
-            	               users=json.load(open("users.json")))
+            	               users=json.load(open("users.json")),
+            	               title="Personal Feed")
     else:
         return redirect("/global_feed")
 
 @app.route("/global_feed", methods=['GET'])
 def global_feed():
     """
-    Renders the user's feed, in chronological order.
+    Renders global Tweeter feed, in chronological order of
+    most recent retweet or time of posting.  The global is
+    global because it includes tweets posted by all users.
 
     Args:
         None
     Returns:
-        True if successful, False otherwise
+        render_template of global_feed_template
     """
     if "user" in session:
     	return render_template("global_feed_template.html",
                                tweets=Tweets(session["tweets"]),
                                user=session["user"],
-                               users=json.load(open("users.json")))
+                               users=json.load(open("users.json")),
+                               title="Global Feed")
     else:
     	return render_template("global_feed_template.html",
                                tweets=Tweets(session["tweets"]),
-                               user="")
+                               user="",
+                               title="Global Feed")
 
 
 @app.route("/retweet", methods=['POST'])
 def retweet():
     """
     Marks a tweet as retweeted by the current user.  This
-    moves a tweet to the top of the feed for all users.
+    moves a tweet to the top of the global feed for all
+    and the top of a user's personal feed if the tweet
+    was posted by or retweeted by someone they follow.
+
+    Code in the html template with Jinja guarantees
+    retweets can only occur when a user is logged in.
 
     Args:
-        tweet (str): identifier for the tweet to be retweeted
+        tweet (str): id for the tweet to be retweeted, provided via http request
     Returns:
-        True if successful, False otherwise
+        redirect to /personal_feed
     """
     tw_id = request.args.get("tweet")
 
@@ -183,14 +198,29 @@ def retweet():
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     """
+    Logs a user in.  The current user is stored in the
+    server session.  Tweets posted or retweets from
+    now on will be under the current user's name. The
+    user will have access to a personal feed, which
+    displays their tweets, their followers' tweets,
+    and their followers' retweets.
+
+    Users must have registered in order to log in.
+
+    Args:
+        username (str): username for user to log in, provided via html form
+        password (str): password for user to log in, provided via html form
+    Returns:
+        redirect to /login if username does not exist or password is incorrect,
+        redirect to /personal_feed if log in is successful
     """
     if request.method == 'GET':
         if "user" in session:
-            return render_template("login_template.html",
-        	                   message="You are currently logged in as " + session["user"] + ".  This will log you out.")
+            flash("You are currently logged in as " + session["user"] + ".  This will log you out.")
+            return render_template("login_template.html", title="Log In")
         else:
-            return render_template("login_template.html",
-        	                   message="You are not currently logged in.")
+            flash("You are not currently logged in.")
+            return render_template("login_template.html", title="Log In")
 
     un = request.form["username"]
     pw = request.form["password"]
@@ -213,9 +243,19 @@ def login():
 @app.route("/register", methods=['GET', 'POST'])
 def register():
     """
+    Registers a user to users.json.  Now that user
+    can log in via /login.
+
+    Args:
+        username (str): username for user to register, provided via html form
+        password (str): password for user to register, provided via html form
+    Returns:
+        redirect to /register if empty username or password or existing
+        username, redirect to /login if log in is successful
     """
     if request.method == 'GET':
-        return render_template("register_template.html")
+        return render_template("register_template.html",
+        	                   title="Register")
 
     un = request.form["username"]
     pw = request.form["password"]
@@ -250,12 +290,18 @@ def register():
     with open("users.json", "w") as outfile:  
         json.dump(users, outfile)
 
-    return redirect(url_for("login"))
+    return redirect("/login")
 
 
 @app.route("/logout", methods=['GET'])
 def logout():
     """
+    Logs a user out from the server session.
+
+    Args:
+        None
+    Returns:
+        redirect to /login
     """
     session.pop("user")
 
@@ -265,6 +311,15 @@ def logout():
 @app.route("/follow", methods=['POST'])
 def follow():
     """
+    Causes the current user to follow another user.
+    This will cause the other user's posts and 
+    reweets to appear on the current user's personal feed.
+
+    Args:
+        followee (str): username of the other user to follow, provided via http request
+    Returns:
+        redirect to /personal_feed if there is a current user logged in,
+        otherwise redirect to /global_feed 
     """
     if "user" in session:
         followee = request.args.get("followee")
@@ -281,6 +336,15 @@ def follow():
 @app.route("/unfollow", methods=['POST'])
 def unfollow():
     """
+    Causes the current user to unfollow another user.
+    This will cause the other user's posts and reweets
+    to stop appearing on the current user's personal feed.
+
+    Args:
+        unfollowee (str): username of the other user to unfollow, provided via http request
+    Returns:
+        redirect to /personal_feed if there is a current user logged in,
+        otherwise redirect to /global_feed
     """
     if "user" in session:
         unfollowee = request.args.get("unfollowee")
@@ -298,14 +362,12 @@ def unfollow():
 @app.route("/", methods=['GET'])
 def home():
     """
-    Redirect the user from the root URL to the /upload URL.
+    Redirect the user from the root to the /global_feed.
 
     Args:
         None
-
     Returns:
-        The required return by Flask so the user is redirected to the /upload
-        URL
+        redirect to /global_feed
     """
     session["tweets"] = json.load(open("tweets.json"))
     return redirect("/global_feed")

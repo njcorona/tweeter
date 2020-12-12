@@ -1,7 +1,9 @@
-<!doctype html>
+{% extends "base.html" %}
+
+{% block body %}
+{{ super() }}
+<br>
 <article class="twitter-feed">
-    <h1>Your Tweeter Feed</h1>
-    <hr>
     <form action="/tweet">
       <input type="submit" value="Post a Tweet!">
     </form>
@@ -71,3 +73,4 @@
 <form action="/register">
   <input type="submit" value="Register a new user.">
 </form>
+{% endblock %}
