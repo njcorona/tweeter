@@ -9,6 +9,7 @@ import json
 from datetime import datetime
 from tweet import *
 
+
 class Tweets:
     def __init__(self, tweets):
         """
@@ -22,7 +23,6 @@ class Tweets:
         """
         self.tweets = tweets
 
-
     def get_sorted_tweets(self, users, user):
         """
         Produces a sorted list of tweets, for the purposes of
@@ -30,7 +30,7 @@ class Tweets:
         either be sorted first by whether the current user
         is following the tweets' senders or retweeters and
         second by time of posting or most recent retweet,
-        or be sorted solely by time of posting or most recent 
+        or be sorted solely by time of posting or most recent
         retweet.
 
         Args:
@@ -51,19 +51,26 @@ class Tweets:
                 when sorting this item in a list
             """
             if item["retweet_time"]:
-                return (item["priority"], datetime.strptime(item["retweet_time"], '%m/%d/%Y %H:%M:%S'))
+                return (item["priority"],
+                        datetime.strptime(item["retweet_time"],
+                                          '%m/%d/%Y %H:%M:%S'))
             else:
-                return (item["priority"], datetime.strptime(item["timestamp"], '%m/%d/%Y %H:%M:%S'))          
+                return (item["priority"],
+                        datetime.strptime(item["timestamp"],
+                                          '%m/%d/%Y %H:%M:%S'))
 
         enhanced_tweets = []
 
         for key in self.tweets:
             new_value = self.tweets[key]
-            new_value["priority"] = user and (new_value["sender"] in users[user]["following"] or new_value["retweeter"] in users[user]["following"])
+
+            new_value["priority"] = user and
+            (new_value["sender"] in users[user]["following"] or
+             new_value["retweeter"] in users[user]["following"])
+
             enhanced_tweets.append(new_value)
 
         return sorted(enhanced_tweets, key=sorter, reverse=True)
-    
 
     def __str__(self):
         """

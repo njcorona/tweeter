@@ -4,6 +4,7 @@ tweet.py
 Class that represents a tweet, storing its key information.
 """
 
+
 class Tweet:
     def __init__(self, tweet, sender, unique, timestamp):
         """
@@ -39,13 +40,12 @@ class Tweet:
         Returns:
             a dictionary representation of the Tweet
         """
-        return { "id" : self.id,
-                 "tweet" : self.tweet,
-                 "sender" : self.sender,
-                 "timestamp" : self.timestamp,
-                 "retweet_time" : self.retweet_time,
-                 "retweeter" : self.retweeter
-               }
+        return {"id": self.id,
+                "tweet": self.tweet,
+                "sender": self.sender,
+                "timestamp": self.timestamp,
+                "retweet_time": self.retweet_time,
+                "retweeter": self.retweeter}
 
     def __str__(self):
         """
