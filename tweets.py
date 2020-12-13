@@ -1,3 +1,9 @@
+"""
+tweets.py
+
+Class that represents a map of tweet IDs to tweets.
+"""
+
 import json
 
 from datetime import datetime

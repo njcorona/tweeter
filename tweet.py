@@ -1,3 +1,9 @@
+"""
+tweet.py
+
+Class that represents a tweet, storing its key information.
+"""
+
 class Tweet:
     def __init__(self, tweet, sender, unique, timestamp):
         """

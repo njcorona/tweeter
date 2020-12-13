@@ -1,3 +1,11 @@
+"""
+app.py
+
+Initializes and run the Tweeter app using flask.
+
+Please see README for installation instructions.
+"""
+
 # built-in modules
 import json
 import os
