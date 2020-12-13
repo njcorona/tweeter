@@ -2,6 +2,10 @@
 
 My final project for CIS 192 (Python) is Tweeter, a clone of Twitter.  Tweeter uses a Flask backend with basic html, Bootstrap, and Jinja for the frontend.
 
+Access Tweeter online at https://tweeter-njcorona.herokuapp.com/ or run it locally as described below.
+
+Watch a video introducing Tweeter on YouTube at https://youtu.be/GWVLh0H834c.
+
 # Installation
 
 There is a requirements.txt file that details all of the required modules and module versions I used in this project.  Tweeter is hosted on Heroku, so you can visit Tweeter, register as a user, and post your own tweets at:  https://tweeter-njcorona.herokuapp.com/.  If too many people access the URL at the same time, new users cannot access the URL, so please remember to close your tab once you're done.
@@ -17,6 +21,7 @@ My project's functionality is split across .html files and .py files.
 - ``app.py``: this contains all of the logic for the server
 - ``tweets.py``: this represents a dictionary mapping tweet IDs to tweets
 - ``tweet.py``: this represents a dictionary mapping fields to values for an individual tweet
+- ``base.html``: basic html that provides a title, flashes messages, and adopts Bootstrap styling; is extended by other html files
 - ``register_template.html``: displays a form to register a new user
 - ``login_template.html``: displays a form to log in as an existing user
 - ``personal_feed_template.html``: displays the current user's personal feed, prioritizing tweets from user's the current user follows and by recency
