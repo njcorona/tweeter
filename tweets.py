@@ -64,9 +64,11 @@ class Tweets:
         for key in self.tweets:
             new_value = self.tweets[key]
 
-            new_value["priority"] = user and
-            (new_value["sender"] in users[user]["following"] or
-             new_value["retweeter"] in users[user]["following"])
+            new_value["priority"] = (user and
+                                     (new_value["sender"] in
+                                      users[user]["following"] or
+                                      new_value["retweeter"] in
+                                      users[user]["following"]))
 
             enhanced_tweets.append(new_value)
 
