@@ -9,7 +9,7 @@ Please see README for installation instructions.
 # built-in modules
 import json
 import os
-import datetime
+from datetime import datetime
 
 # non-trivial third-party modules
 from flask import Flask, flash, render_template, request, redirect, session
